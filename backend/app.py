@@ -1,5 +1,6 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from PyPDF2 import PdfReader
+from text_utils import clean_text
 import os
 import shutil
 
@@ -57,6 +58,7 @@ def extract_text(filename: str):
 
     return {
         "filename": filename,
-        "text": extracted_text,
-        "failed_pages": failed_pages
+    "raw_text": extracted_text,
+    "cleaned_text": clean_text(extracted_text),
+    "failed_pages": failed_pages
     }
