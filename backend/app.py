@@ -1,4 +1,5 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException
+from PyPDF2 import PdfReader
 import os
 import shutil
 
@@ -22,3 +23,40 @@ async def upload_pdf(file: UploadFile = File(...)):
         shutil.copyfileobj(file.file, buffer)
     
     return {"filename": file.filename, "message": "File uploaded successfully"}
+
+@app.get("/extract-text/{filename}")
+def extract_text(filename: str):
+    file_path = os.path.join(UPLOAD_DIR, filename)
+
+    # 1) Check if file exists
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="File not found.")
+
+    # 2) Read PDF
+    reader = PdfReader(file_path)
+    extracted_text = ""
+    failed_pages = 0
+
+    # 3) Extract text page by page safely
+    for page in reader.pages:
+        try:
+            text = page.extract_text()
+            if text:
+                extracted_text += text + "\n"
+        except Exception:
+            failed_pages += 1
+            continue
+
+    if not extracted_text.strip():
+        return {
+            "filename": filename,
+            "text": "",
+            "note": "No extractable text found. PDF may be scanned or complex.",
+            "failed_pages": failed_pages
+        }
+
+    return {
+        "filename": filename,
+        "text": extracted_text,
+        "failed_pages": failed_pages
+    }
