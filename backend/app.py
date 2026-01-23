@@ -1,6 +1,8 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from PyPDF2 import PdfReader
 from text_utils import clean_text
+from screening import screen_resume
+from keywords import REQUIRED_SKILLS
 import os
 import shutil
 
@@ -55,10 +57,17 @@ def extract_text(filename: str):
             "note": "No extractable text found. PDF may be scanned or complex.",
             "failed_pages": failed_pages
         }
+    
+    # 4) Clean text
+    cleaned_text = clean_text(extracted_text)
+
+# 5) Screen resume
+    screening_result = screen_resume(cleaned_text, REQUIRED_SKILLS)
 
     return {
         "filename": filename,
-    "raw_text": extracted_text,
-    "cleaned_text": clean_text(extracted_text),
+    "score": screening_result["score"],
+    "matched_skills": screening_result["matched_skills"],
+    "missing_skills": screening_result["missing_skills"],
     "failed_pages": failed_pages
     }
