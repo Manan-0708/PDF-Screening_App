@@ -2,7 +2,7 @@ from fastapi import FastAPI, UploadFile, File, HTTPException
 from PyPDF2 import PdfReader
 from text_utils import clean_text
 from screening import screen_resume
-from keywords import REQUIRED_SKILLS
+from keywords import SKILL_CATEGORIES
 import os
 import shutil
 
@@ -62,11 +62,12 @@ def extract_text(filename: str):
     cleaned_text = clean_text(extracted_text)
 
 # 5) Screen resume
-    screening_result = screen_resume(cleaned_text, REQUIRED_SKILLS)
+    screening_result = screen_resume(cleaned_text, SKILL_CATEGORIES)
 
     return {
         "filename": filename,
-    "score": screening_result["score"],
+    "score": screening_result["total_score"],
+    "breakdown": screening_result["breakdown"],
     "matched_skills": screening_result["matched_skills"],
     "missing_skills": screening_result["missing_skills"],
     "failed_pages": failed_pages
