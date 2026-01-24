@@ -3,6 +3,7 @@ from PyPDF2 import PdfReader
 from text_utils import clean_text
 from screening import screen_resume
 from keywords import SKILL_CATEGORIES
+from chatbot import generate_response
 import os
 import shutil
 
@@ -64,11 +65,14 @@ def extract_text(filename: str):
 # 5) Screen resume
     screening_result = screen_resume(cleaned_text, SKILL_CATEGORIES)
 
+    chatbot_response = generate_response(
+        screening_result["total_score"], screening_result["breakdown"]
+    )
+
     return {
         "filename": filename,
     "score": screening_result["total_score"],
     "breakdown": screening_result["breakdown"],
-    "matched_skills": screening_result["matched_skills"],
-    "missing_skills": screening_result["missing_skills"],
+    "chatbot_feedback": chatbot_response,
     "failed_pages": failed_pages
     }
