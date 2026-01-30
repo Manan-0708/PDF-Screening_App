@@ -1,6 +1,7 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from PyPDF2 import PdfReader
 from pydantic import BaseModel
+
 import os
 import shutil
 
@@ -9,10 +10,23 @@ from screening import screen_resume
 from keywords import SKILL_CATEGORIES
 from chatbot import generate_response, answer_question
 
-app = FastAPI(title="PDF Screening API")
+from ai_layer.ai_engine import AIEngine
+from ai_layer.schemas import ResumeAnalysisInput
+
+app = FastAPI(title="Resume Intelligence API")
 
 UPLOAD_DIR = "data/uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+def normalize_skills(skills):
+    """
+    Ensures skills are in Dict[str, List[str]] format.
+    """
+    if isinstance(skills, dict):
+        return skills
+    if isinstance(skills, list):
+        return {"general": skills}
+    return {}
 
 
 # ------------------------
@@ -39,9 +53,9 @@ async def upload_pdf(file: UploadFile = File(...)):
     if not file.filename.endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Only PDF files are allowed.")
 
-    file_location = os.path.join(UPLOAD_DIR, file.filename)
+    file_path = os.path.join(UPLOAD_DIR, file.filename)
 
-    with open(file_location, "wb") as buffer:
+    with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
     return {
@@ -51,13 +65,13 @@ async def upload_pdf(file: UploadFile = File(...)):
 
 
 # ------------------------
-# Extract + Screen + Explain
+# Extract + Screen + Explain + AI Insights
 # ------------------------
 @app.get("/extract-text/{filename}")
 def extract_text(filename: str):
     file_path = os.path.join(UPLOAD_DIR, filename)
 
-    # 1) Check if file exists
+    # 1) Check file existence
     if not os.path.exists(file_path):
         raise HTTPException(status_code=404, detail="File not found.")
 
@@ -66,7 +80,7 @@ def extract_text(filename: str):
     extracted_text = ""
     failed_pages = 0
 
-    # 3) Extract text page by page safely
+    # 3) Safe page-by-page extraction
     for page in reader.pages:
         try:
             text = page.extract_text()
@@ -86,27 +100,45 @@ def extract_text(filename: str):
     # 4) Clean text
     cleaned_text = clean_text(extracted_text)
 
-    # 5) Screen resume
+    # 5) Rule-based screening
     screening_result = screen_resume(cleaned_text, SKILL_CATEGORIES)
 
-    # 6) Generate chatbot-style explanation
+    # 6) Deterministic chatbot feedback
     chatbot_feedback = generate_response(
         screening_result["total_score"],
         screening_result["breakdown"]
     )
 
-    # 7) Return response
+    # 7) AI Interpretation Layer (DOWNSTREAM ONLY)
+    ai_engine = AIEngine()
+
+    ai_input = ResumeAnalysisInput(
+        resume_text=cleaned_text,
+        scores={"total": screening_result["total_score"]},
+        matched_skills=normalize_skills(
+            screening_result.get("matched_skills")
+        ),
+        missing_skills=normalize_skills(
+            screening_result.get("missing_skills")
+        )
+    )
+
+
+    ai_insights = ai_engine.generate_insights(ai_input)
+
+    # 8) Final response (non-breaking)
     return {
         "filename": filename,
         "score": screening_result["total_score"],
         "breakdown": screening_result["breakdown"],
         "chatbot_feedback": chatbot_feedback,
+        "ai_insights": ai_insights.dict(),
         "failed_pages": failed_pages
     }
 
 
 # ------------------------
-# Interactive Chat Endpoint
+# Interactive Chat Endpoint (Rule-Based Only)
 # ------------------------
 @app.post("/chat")
 def chat_with_resume(request: ChatRequest):
