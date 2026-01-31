@@ -1,0 +1,12 @@
+# Backend
+venv/
+__pycache__/
+*.pyc
+
+# Uploads
+data/uploads/
+
+# Frontend
+frontend/node_modules/
+frontend/.next/
+frontend/.env*
