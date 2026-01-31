@@ -2,13 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { 
-  Briefcase, 
-  Check, 
-  X, 
+import {
+  Briefcase,
+  Check,
+  X,
   Sparkles,
   Loader2,
-  TrendingUp
+  TrendingUp,
 } from "lucide-react";
 import { getJobRecommendations, JobRecommendation } from "../lib/api";
 
@@ -28,10 +28,13 @@ const containerVariants = {
 
 const cardVariants = {
   hidden: { opacity: 0, y: 30 },
-  visible: { 
-    opacity: 1, 
+  visible: {
+    opacity: 1,
     y: 0,
-    transition: { duration: 0.5, ease: "easeOut" }
+    transition: {
+      duration: 0.5,
+      ease: [0.16, 1, 0.3, 1], // ✅ FIXED (valid easing)
+    },
   },
 };
 
@@ -45,7 +48,7 @@ export function JobRecommendations({ filename }: JobRecommendationsProps) {
       try {
         const data = await getJobRecommendations(filename);
         setJobs(data);
-      } catch (err) {
+      } catch {
         setError("Failed to load job recommendations");
       } finally {
         setIsLoading(false);
@@ -99,7 +102,7 @@ export function JobRecommendations({ filename }: JobRecommendationsProps) {
         <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-primary/10 mb-3">
           <Briefcase className="w-7 h-7 text-primary" />
         </div>
-        <h2 className="text-2xl font-semibold text-foreground">Job Recommendations</h2>
+        <h2 className="text-2xl font-semibold">Job Recommendations</h2>
         <p className="text-muted-foreground mt-1">
           {jobs.length} jobs matched based on your resume
         </p>
@@ -122,11 +125,7 @@ export function JobRecommendations({ filename }: JobRecommendationsProps) {
           >
             {/* Job Header */}
             <div className="flex items-start justify-between gap-4 mb-4">
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold text-foreground leading-tight">
-                  {job.job_title}
-                </h3>
-              </div>
+              <h3 className="text-lg font-semibold">{job.job_title}</h3>
               <div className={`px-3 py-1.5 rounded-full border ${getMatchBgColor(job.match_score)}`}>
                 <div className="flex items-center gap-1.5">
                   <TrendingUp className={`w-4 h-4 ${getMatchColor(job.match_score)}`} />
@@ -137,7 +136,7 @@ export function JobRecommendations({ filename }: JobRecommendationsProps) {
               </div>
             </div>
 
-            {/* Match Progress */}
+            {/* Progress */}
             <div className="mb-4">
               <div className="h-2 bg-muted rounded-full overflow-hidden">
                 <motion.div
@@ -145,92 +144,29 @@ export function JobRecommendations({ filename }: JobRecommendationsProps) {
                   animate={{ width: `${job.match_score}%` }}
                   transition={{ duration: 0.8, delay: 0.3 + index * 0.1 }}
                   className={`h-full rounded-full ${
-                    job.match_score >= 80 ? "bg-green-500" :
-                    job.match_score >= 60 ? "bg-yellow-500" : "bg-orange-500"
+                    job.match_score >= 80
+                      ? "bg-green-500"
+                      : job.match_score >= 60
+                      ? "bg-yellow-500"
+                      : "bg-orange-500"
                   }`}
                 />
               </div>
-            </div>
-
-            {/* Skills */}
-            <div className="space-y-3 mb-4">
-              {/* Matched Skills */}
-              {job.matched_skills.length > 0 && (
-                <div>
-                  <div className="flex items-center gap-1.5 mb-2">
-                    <Check className="w-4 h-4 text-green-500" />
-                    <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                      Matched Skills
-                    </span>
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {job.matched_skills.map((skill, idx) => (
-                      <motion.span
-                        key={idx}
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: 0.4 + idx * 0.05 }}
-                        className="px-2.5 py-1 text-xs font-medium bg-green-500/10 text-green-600 rounded-md border border-green-500/20"
-                      >
-                        {skill}
-                      </motion.span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Missing Skills */}
-              {job.missing_skills.length > 0 && (
-                <div>
-                  <div className="flex items-center gap-1.5 mb-2">
-                    <X className="w-4 h-4 text-orange-500" />
-                    <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                      Skills to Develop
-                    </span>
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {job.missing_skills.map((skill, idx) => (
-                      <motion.span
-                        key={idx}
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: 0.5 + idx * 0.05 }}
-                        className="px-2.5 py-1 text-xs font-medium bg-orange-500/10 text-orange-600 rounded-md border border-orange-500/20"
-                      >
-                        {skill}
-                      </motion.span>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
 
             {/* AI Insights */}
             <div className="pt-4 border-t border-border">
               <div className="flex items-center gap-1.5 mb-2">
                 <Sparkles className="w-4 h-4 text-primary" />
-                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                <span className="text-xs uppercase tracking-wide text-muted-foreground">
                   AI Job Insights
                 </span>
               </div>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                {job.ai_job_insights}
-              </p>
+              <p className="text-sm text-muted-foreground">{job.ai_job_insights}</p>
             </div>
           </motion.div>
         ))}
       </motion.div>
-
-      {jobs.length === 0 && !isLoading && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="text-center py-12 bg-card rounded-2xl border border-border"
-        >
-          <Briefcase className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-          <p className="text-muted-foreground">No job recommendations found</p>
-        </motion.div>
-      )}
     </div>
   );
 }
