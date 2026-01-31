@@ -1,4 +1,4 @@
-# Python
+# Backend
 venv/
 __pycache__/
 *.pyc
@@ -7,6 +7,6 @@ __pycache__/
 data/uploads/
 
 # Frontend
-node_modules/
-.next/
-.env.local
+frontend/node_modules/
+frontend/.next/
+frontend/.env*
