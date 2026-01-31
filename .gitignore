@@ -1,10 +1,10 @@
-# Backend
-venv/
+# Python
+backend/venv/
 __pycache__/
 *.pyc
 
-# Uploads
-data/uploads/
+# Uploaded files & generated PDFs
+backend/data/uploads/
 
 # Frontend
 frontend/node_modules/
