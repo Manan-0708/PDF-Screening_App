@@ -4,8 +4,6 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   Briefcase,
-  Check,
-  X,
   Sparkles,
   Loader2,
   TrendingUp,
@@ -32,8 +30,7 @@ const cardVariants = {
     opacity: 1,
     y: 0,
     transition: {
-      duration: 0.5,
-      ease: [0.16, 1, 0.3, 1], // ✅ FIXED (valid easing)
+      duration: 0.5, // ✅ no ease → fully type-safe
     },
   },
 };
@@ -62,7 +59,9 @@ export function JobRecommendations({ filename }: JobRecommendationsProps) {
     return (
       <div className="flex flex-col items-center justify-center py-16">
         <Loader2 className="w-10 h-10 animate-spin text-primary" />
-        <p className="mt-4 text-muted-foreground">Finding matching jobs...</p>
+        <p className="mt-4 text-muted-foreground">
+          Finding matching jobs...
+        </p>
       </div>
     );
   }
@@ -102,7 +101,9 @@ export function JobRecommendations({ filename }: JobRecommendationsProps) {
         <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-primary/10 mb-3">
           <Briefcase className="w-7 h-7 text-primary" />
         </div>
-        <h2 className="text-2xl font-semibold">Job Recommendations</h2>
+        <h2 className="text-2xl font-semibold">
+          Job Recommendations
+        </h2>
         <p className="text-muted-foreground mt-1">
           {jobs.length} jobs matched based on your resume
         </p>
@@ -125,11 +126,26 @@ export function JobRecommendations({ filename }: JobRecommendationsProps) {
           >
             {/* Job Header */}
             <div className="flex items-start justify-between gap-4 mb-4">
-              <h3 className="text-lg font-semibold">{job.job_title}</h3>
-              <div className={`px-3 py-1.5 rounded-full border ${getMatchBgColor(job.match_score)}`}>
+              <h3 className="text-lg font-semibold">
+                {job.job_title}
+              </h3>
+
+              <div
+                className={`px-3 py-1.5 rounded-full border ${getMatchBgColor(
+                  job.match_score
+                )}`}
+              >
                 <div className="flex items-center gap-1.5">
-                  <TrendingUp className={`w-4 h-4 ${getMatchColor(job.match_score)}`} />
-                  <span className={`text-sm font-semibold ${getMatchColor(job.match_score)}`}>
+                  <TrendingUp
+                    className={`w-4 h-4 ${getMatchColor(
+                      job.match_score
+                    )}`}
+                  />
+                  <span
+                    className={`text-sm font-semibold ${getMatchColor(
+                      job.match_score
+                    )}`}
+                  >
                     {job.match_score}%
                   </span>
                 </div>
@@ -142,7 +158,10 @@ export function JobRecommendations({ filename }: JobRecommendationsProps) {
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: `${job.match_score}%` }}
-                  transition={{ duration: 0.8, delay: 0.3 + index * 0.1 }}
+                  transition={{
+                    duration: 0.8,
+                    delay: 0.3 + index * 0.1,
+                  }}
                   className={`h-full rounded-full ${
                     job.match_score >= 80
                       ? "bg-green-500"
@@ -162,7 +181,9 @@ export function JobRecommendations({ filename }: JobRecommendationsProps) {
                   AI Job Insights
                 </span>
               </div>
-              <p className="text-sm text-muted-foreground">{job.ai_job_insights}</p>
+              <p className="text-sm text-muted-foreground">
+                {job.ai_job_insights}
+              </p>
             </div>
           </motion.div>
         ))}
