@@ -12,7 +12,6 @@ def screen_resume(cleaned_text: str, skill_categories: dict):
         missing = [s for s in skills if s not in cleaned_text]
 
         category_score = 0
-
         if skills:
             category_score = int((len(matched) / len(skills)) * weight)
 
@@ -26,9 +25,9 @@ def screen_resume(cleaned_text: str, skill_categories: dict):
         matched_skills.extend(matched)
         missing_skills.extend(missing)
 
-        return {
-            "total_score": total_score,
-            "breakdown": breakdown,
-            "matched_skills": matched_skills,
-            "missing_skills": missing_skills
-        }
+    return {
+        "total_score": total_score,
+        "breakdown": breakdown,
+        "matched_skills": matched_skills,
+        "missing_skills": missing_skills
+    }
