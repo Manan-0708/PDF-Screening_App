@@ -1,6 +1,16 @@
-const BASE_URL = "http://127.0.0.1:8000";
+// frontend/lib/api.ts
 
-export async function uploadResume(file: File): Promise<{ filename: string }> {
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+if (!BASE_URL) {
+  throw new Error("NEXT_PUBLIC_API_BASE_URL is not defined");
+}
+
+/* ---------------- API CALLS ---------------- */
+
+export async function uploadResume(
+  file: File
+): Promise<{ filename: string }> {
   const formData = new FormData();
   formData.append("file", file);
 
@@ -16,7 +26,9 @@ export async function uploadResume(file: File): Promise<{ filename: string }> {
   return response.json();
 }
 
-export async function extractText(filename: string): Promise<ResumeInsights> {
+export async function extractText(
+  filename: string
+): Promise<ResumeInsights> {
   const response = await fetch(`${BASE_URL}/extract-text/${filename}`);
 
   if (!response.ok) {
@@ -51,7 +63,6 @@ export interface ResumeInsights {
     profile_summary: string;
   };
 }
-
 
 export interface JobRecommendation {
   job_title: string;
