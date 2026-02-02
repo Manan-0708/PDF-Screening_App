@@ -1,8 +1,10 @@
-const BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL ||
-  "https://resume-intelligence-backend-4165.onrender.com";
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-/* ---------------- API CALLS ---------------- */
+if (!BASE_URL) {
+  throw new Error("NEXT_PUBLIC_API_BASE_URL is not defined");
+}
+
+/* ------------ API CALLS ------------ */
 
 export async function uploadResume(
   file: File
@@ -17,8 +19,7 @@ export async function uploadResume(
 
   if (!response.ok) {
     const text = await response.text();
-    console.error("Upload failed:", text);
-    throw new Error("Failed to upload resume");
+    throw new Error(text || "Failed to upload resume");
   }
 
   return response.json();
@@ -28,7 +29,7 @@ export async function extractText(filename: string) {
   const response = await fetch(`${BASE_URL}/extract-text/${filename}`);
 
   if (!response.ok) {
-    throw new Error("Failed to extract resume text");
+    throw new Error("Failed to extract resume");
   }
 
   return response.json();
