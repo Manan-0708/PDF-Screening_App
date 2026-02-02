@@ -30,23 +30,22 @@ from job_matching.matcher import match_resume_to_job
 # ------------------------
 app = FastAPI(title="Resume Intelligence API")
 
+# ✅ FIXED CORS (THIS IS THE KEY)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",
         "https://pdf-screening-app.vercel.app",
-        "https://*.vercel.app",
     ],
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-
 UPLOAD_DIR = "data/uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-# AI engine (resume insights only)
 ai_engine = AIEngine()
 
 # ------------------------
