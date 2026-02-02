@@ -164,7 +164,7 @@ export default function Home() {
               {/* Download PDF */}
               <div className="flex justify-center">
                 <motion.a
-                  href={`http://127.0.0.1:8000/download-analysis/${filename}`}
+                  href={`${process.env.NEXT_PUBLIC_API_BASE_URL}/download-analysis/${filename}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   whileHover={{ scale: 1.05 }}
