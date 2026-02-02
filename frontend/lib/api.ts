@@ -1,5 +1,3 @@
-// frontend/lib/api.ts
-
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 if (!BASE_URL) {
@@ -20,15 +18,14 @@ export async function uploadResume(
   });
 
   if (!response.ok) {
-    throw new Error("Failed to upload resume");
+    const text = await response.text();
+    throw new Error(text || "Failed to upload resume");
   }
 
   return response.json();
 }
 
-export async function extractText(
-  filename: string
-): Promise<ResumeInsights> {
+export async function extractText(filename: string) {
   const response = await fetch(`${BASE_URL}/extract-text/${filename}`);
 
   if (!response.ok) {
@@ -38,9 +35,7 @@ export async function extractText(
   return response.json();
 }
 
-export async function getJobRecommendations(
-  filename: string
-): Promise<JobRecommendation[]> {
+export async function getJobRecommendations(filename: string) {
   const response = await fetch(`${BASE_URL}/recommend-jobs/${filename}`);
 
   if (!response.ok) {
@@ -51,7 +46,7 @@ export async function getJobRecommendations(
   return data.job_recommendations;
 }
 
-/* ---------------- TYPES (ALIGNED TO BACKEND) ---------------- */
+/* ---------------- TYPES ---------------- */
 
 export interface ResumeInsights {
   score: number;
