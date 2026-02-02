@@ -1,8 +1,6 @@
-const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-
-if (!BASE_URL) {
-  throw new Error("NEXT_PUBLIC_API_BASE_URL is not defined");
-}
+const BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL ||
+  "https://resume-intelligence-backend-4165.onrender.com";
 
 /* ---------------- API CALLS ---------------- */
 
@@ -19,7 +17,8 @@ export async function uploadResume(
 
   if (!response.ok) {
     const text = await response.text();
-    throw new Error(text || "Failed to upload resume");
+    console.error("Upload failed:", text);
+    throw new Error("Failed to upload resume");
   }
 
   return response.json();
@@ -44,25 +43,4 @@ export async function getJobRecommendations(filename: string) {
 
   const data = await response.json();
   return data.job_recommendations;
-}
-
-/* ---------------- TYPES ---------------- */
-
-export interface ResumeInsights {
-  score: number;
-  screening_breakdown: Record<string, number>;
-  chatbot_feedback: string;
-  ai_insights: {
-    strengths: string[];
-    weaknesses: string[];
-    profile_summary: string;
-  };
-}
-
-export interface JobRecommendation {
-  job_title: string;
-  match_score: number;
-  matched_skills: string[];
-  missing_skills: string[];
-  ai_job_insights: string;
 }
