@@ -1,6 +1,6 @@
-# 📄 PDF Resume Screening & Job Recommendation REST API
+# 📄 PDF Resume Screening & Job-Recommendation REST API
 
-A high-performance, full-stack resume screening and role-matching REST API built with **Python**, **Flask**, and **FastAPI**. It extracts text from PDF resumes using **PyPDF**, evaluates candidates against a keyword-driven filtering pipeline, matches candidate skill profiles against curated job datasets, generates PDF reports, and exposes a dual-framework REST API deployed on **Vercel** and **Render**.
+A high-performance, full-stack resume screening and role-matching REST API built with **Python**, **Flask**, and **FastAPI**. It extracts text from PDF resumes using **PyPDF**, evaluates candidates against a keyword-driven filtering pipeline, matches candidate skill profiles against curated job datasets, generates PDF analysis reports, and exposes a dual-framework REST API deployed on **Vercel** and **Render**.
 
 ---
 
@@ -15,24 +15,24 @@ A high-performance, full-stack resume screening and role-matching REST API built
 ## ✨ Features & Architecture
 
 * **Dual-Framework Architecture (FastAPI + Flask):**
-  * **FastAPI:** Handles async file uploads, PyPDF text extraction, PDF report generation, and OpenAPI spec generation.
-  * **Flask REST Subsystem:** Handles candidate skill screening (`/flask/api/screen`), role-based job matching (`/flask/api/match-jobs`), and candidate Q&A (`/flask/api/ask`). The Flask WSGI service is mounted into FastAPI via Starlette `WSGIMiddleware`.
-* 📄 **PyPDF-Based Parsing:** Page-by-page text extraction with support for special technical skill syntax (`C++`, `C#`, `.NET`, `Node.js`, `Python`).
-* 🎯 **Keyword-Driven Filtering Pipeline:** Categorizes candidate skills across languages, CS fundamentals, frameworks, and tools.
-* 📊 **Role-Based Job Matching:** Evaluates candidate skill profiles against curated job role datasets to rank job alignment percentage and identify skill gaps.
+  * **FastAPI:** Handles async file uploads, PyPDF text extraction, PDF report downloads, and OpenAPI Swagger documentation (`/docs`).
+  * **Flask REST Subsystem:** Handles candidate skill screening (`/flask/api/screen`), role-based job matching (`/flask/api/match-jobs`), and health monitoring (`/flask/api/health`). Mounted into FastAPI via Starlette `WSGIMiddleware`.
+* 📄 **PyPDF-Based Parsing:** Page-by-page text extraction with support for technical skill syntax (`C++`, `C#`, `.NET`, `Node.js`, `Python`).
+* 🎯 **Keyword-Driven Filtering Pipeline:** Evaluates and scores candidate skills across technical categories (languages, CS fundamentals, frameworks, tools).
+* 📊 **Role-Based Job Matching:** Ranks candidate skill alignment against curated job-role datasets to compute match scores and identify skill gaps.
 * 📥 **PDF Analysis Report Generation:** Generates downloadable candidate evaluation reports using ReportLab canvas.
-* 💬 **Candidate Q&A Endpoint:** Interactive REST API endpoint answering candidate score breakdown and strength questions.
+* 🎨 **Lightweight Basic Frontend:** Single-page HTML/CSS/Vanilla JS web interface connecting to REST APIs with zero Node/npm overhead.
 
 ---
 
 ## 🛠️ Technologies & Tools Used
 
-* **Language & Core:** Python 3.x
-* **Frameworks:** Flask, FastAPI, Uvicorn, Starlette
+* **Languages & Core:** Python 3.x, HTML5, CSS3, JavaScript (Vanilla)
+* **Frameworks & Libraries:** Flask, FastAPI, Uvicorn, Starlette
 * **Parsing & PDF:** PyPDF (`pypdf` / `PyPDF2`), ReportLab
-* **API Architecture:** REST APIs, CORS Middleware, WSGIMiddleware
-* **Frontend:** Next.js (App Router), React, TypeScript, Tailwind CSS
+* **API & Middleware:** REST APIs, CORS Middleware, WSGIMiddleware
 * **Deployment & Hosting:** Vercel (Frontend), Render (Backend Service)
+* **Version Control:** Git & GitHub
 
 ---
 
@@ -43,23 +43,21 @@ PDF-Screening_App/
 ├── backend/
 │   ├── ai_layer/          # Candidate scoring schemas & insights
 │   ├── job_matching/      # Job definitions & role matcher engine
-│   ├── app.py             # FastAPI entrypoint & WSGI Flask mounting
+│   ├── app.py             # FastAPI entrypoint, static files & Flask mounting
 │   ├── flask_app.py       # Flask REST API microservice
-│   ├── chatbot.py         # Q&A & feedback generator
 │   ├── screening.py       # Keyword-driven screening pipeline
 │   ├── text_utils.py      # PyPDF text cleaning & normalization
-│   └── requirements.txt   # Python dependencies (Flask, FastAPI, PyPDF)
+│   └── requirements.txt   # Python backend dependencies (Flask, FastAPI, PyPDF)
 └── frontend/
-    ├── app/               # Next.js App Router pages
-    ├── components/        # React UI components
-    └── lib/               # API client
+    ├── index.html         # Basic single-page web dashboard
+    └── vercel.json        # Static deployment configuration for Vercel
 ```
 
 ---
 
 ## 🚀 Running the Project Locally
 
-### 1. Backend (Flask + FastAPI)
+### 1. Environment Setup
 
 ```bash
 cd backend
@@ -73,23 +71,32 @@ venv\Scripts\activate
 
 # Install dependencies
 pip install -r requirements.txt
+```
 
-# Start unified FastAPI + Flask server
+### 2. Start Unified Server (FastAPI + Flask + Basic Frontend)
+
+```bash
 python -m uvicorn app:app --reload --port 8000
 ```
 
-* **FastAPI Endpoints:** `http://127.0.0.1:8000`
-* **Flask REST Endpoints:** `http://127.0.0.1:8000/flask/api/...`
+* **Web Interface:** Open [http://127.0.0.1:8000/](http://127.0.0.1:8000/) in your browser.
+* **FastAPI Docs:** [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+* **Flask REST Subsystem:** [http://127.0.0.1:8000/flask/api/health](http://127.0.0.1:8000/flask/api/health)
 
-### 2. Frontend (Next.js)
+---
 
-```bash
-cd frontend
-npm install
-cmd /c "npm run dev"
-```
+## ☁️ Deployment Guide
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+### Backend on Render
+1. Create a **New Web Service** on Render and connect your GitHub repository.
+2. Set Root Directory to `backend`.
+3. Build Command: `pip install -r requirements.txt`
+4. Start Command: `uvicorn app:app --host 0.0.0.0 --port $PORT`
+
+### Frontend on Vercel
+1. Import project into Vercel and select the `frontend` folder as the Root Directory.
+2. Framework Preset: **Other** (Static HTML).
+3. Deploy!
 
 ---
 

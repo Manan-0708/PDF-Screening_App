@@ -1,6 +1,7 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from starlette.middleware.wsgi import WSGIMiddleware
 from PyPDF2 import PdfReader
 from pydantic import BaseModel
@@ -37,11 +38,7 @@ app = FastAPI(title="Resume Intelligence API (FastAPI + Flask)")
 # ✅ CORS Middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "https://pdf-screening-app.vercel.app",
-    ],
-    allow_origin_regex=r"https://.*\.vercel\.app",
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -133,9 +130,9 @@ class ChatRequest(BaseModel):
 
 
 # ------------------------
-# Health Check
+# Health Check API
 # ------------------------
-@app.get("/")
+@app.get("/api/status")
 def health_check():
     return {
         "status": "API running successfully",
@@ -312,3 +309,10 @@ def recommend_jobs(filename: str):
 def chat_ask(req: ChatRequest):
     answer = answer_question(req.question, req.score, req.breakdown)
     return {"question": req.question, "answer": answer}
+
+# ------------------------
+# Mount Basic Frontend
+# ------------------------
+frontend_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "frontend"))
+if os.path.exists(frontend_dir):
+    app.mount("/", StaticFiles(directory=frontend_dir, html=True), name="frontend")

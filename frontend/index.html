@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Resume Intelligence & Job Matcher</title>
+  <style>
+    :root {
+      --bg-color: #0f172a;
+      --card-bg: #1e293b;
+      --accent: #3b82f6;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --border: #334155;
+      --green: #22c55e;
+      --yellow: #eab308;
+      --red: #ef4444;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: rgba(30, 41, 59, 0.8);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 1.5rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    header h1 { font-size: 1.1rem; font-weight: 600; }
+    header p { font-size: 0.75rem; color: var(--text-muted); }
+
+    .btn {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      font-weight: 500;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: opacity 0.2s;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn:hover { opacity: 0.9; }
+    .btn-secondary { background: #334155; color: var(--text-main); }
+
+    .container {
+      max-width: 900px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 2rem 1rem;
+      flex: 1;
+    }
+
+    /* Upload Card */
+    .upload-card {
+      background: var(--card-bg);
+      border: 2px dashed var(--border);
+      border-radius: 16px;
+      padding: 3rem 1.5rem;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    .upload-card:hover { border-color: var(--accent); }
+    .upload-card input[type="file"] { display: none; }
+
+    /* Results Dashboard */
+    .dashboard { display: none; gap: 1.5rem; flex-direction: column; }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.5rem;
+    }
+
+    .card-title { font-size: 1rem; font-weight: 600; margin-bottom: 1rem; }
+
+    /* Score Bar */
+    .score-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+    .score-num { font-size: 1.75rem; font-weight: 700; }
+    .progress-bar { background: #334155; height: 10px; border-radius: 5px; overflow: hidden; }
+    .progress-fill { height: 100%; width: 0%; transition: width 0.5s ease; }
+
+    /* Grid layout */
+    .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; }
+
+    .skill-cat { background: #0f172a; padding: 1rem; border-radius: 12px; }
+    .skill-name { text-transform: capitalize; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.5rem; }
+
+    .badge {
+      display: inline-block;
+      padding: 0.25rem 0.5rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      margin: 0.2rem;
+    }
+    .badge-matched { background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); }
+    .badge-missing { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+
+    /* Job Recommendation Cards */
+    .job-card { background: #0f172a; border: 1px solid var(--border); padding: 1rem; border-radius: 12px; margin-bottom: 0.75rem; }
+    .job-header { display: flex; justify-content: space-between; font-weight: 600; margin-bottom: 0.5rem; }
+
+    footer { text-align: center; padding: 1.5rem; color: var(--text-muted); font-size: 0.75rem; border-top: 1px solid var(--border); }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div>
+      <h1>📄 Resume Intelligence API</h1>
+      <p>Python • Flask • FastAPI • PyPDF • REST APIs</p>
+    </div>
+    <button id="resetBtn" class="btn btn-secondary" style="display: none;" onclick="resetApp()">Upload Another PDF</button>
+  </header>
+
+  <div class="container">
+
+    <!-- UPLOAD SECTION -->
+    <div id="uploadSection" class="upload-card" onclick="document.getElementById('fileInput').click()">
+      <input type="file" id="fileInput" accept=".pdf" onchange="handleFileUpload(event)">
+      <h2 style="font-size: 1.25rem; margin-bottom: 0.5rem;">Upload Resume PDF</h2>
+      <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">Drag & drop your PDF file here, or click to browse</p>
+      <button class="btn" type="button">Select PDF Resume</button>
+      <p id="uploadStatus" style="margin-top: 1rem; color: var(--accent); font-size: 0.85rem; font-weight: 500;"></p>
+    </div>
+
+    <!-- DASHBOARD RESULTS SECTION -->
+    <div id="dashboardSection" class="dashboard">
+
+      <!-- Score Card -->
+      <div class="card">
+        <div class="score-header">
+          <div class="card-title" style="margin: 0;">Technical Score</div>
+          <div id="scoreVal" class="score-num">0/100</div>
+        </div>
+        <div class="progress-bar">
+          <div id="scoreFill" class="progress-fill"></div>
+        </div>
+      </div>
+
+      <!-- Skill Breakdown -->
+      <div class="card">
+        <div class="card-title">Screening Breakdown</div>
+        <div id="breakdownGrid" class="grid-2"></div>
+      </div>
+
+      <!-- AI Insights -->
+      <div class="card">
+        <div class="card-title">Profile Analysis</div>
+        <p id="profileSummary" style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;"></p>
+        <div class="grid-2">
+          <div>
+            <strong style="color: #4ade80; font-size: 0.85rem;">Strengths</strong>
+            <ul id="strengthsList" style="margin-top: 0.5rem; font-size: 0.85rem; color: var(--text-muted); padding-left: 1.2rem;"></ul>
+          </div>
+          <div>
+            <strong style="color: #f87171; font-size: 0.85rem;">Areas to Improve</strong>
+            <ul id="weaknessesList" style="margin-top: 0.5rem; font-size: 0.85rem; color: var(--text-muted); padding-left: 1.2rem;"></ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Download PDF Analysis -->
+      <div style="text-align: center;">
+        <a id="downloadPdfBtn" href="#" target="_blank" class="btn" style="background: var(--green); padding: 0.75rem 1.5rem;">
+          📥 Download PDF Analysis Report
+        </a>
+      </div>
+
+      <!-- Job Recommendations -->
+      <div class="card">
+        <div class="card-title">Role-Based Job Recommendations</div>
+        <div id="jobsList"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <footer>
+    Resume Intelligence REST API • Built with Python, Flask, FastAPI, PyPDF, Vercel & Render
+  </footer>
+
+  <script>
+    const API_BASE = window.location.origin.includes("3000") || window.location.origin.includes("5500") 
+      ? "http://127.0.0.1:8000" 
+      : window.location.origin;
+
+    let currentFilename = "";
+
+    async function handleFileUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const statusEl = document.getElementById("uploadStatus");
+      statusEl.innerText = "Uploading & extracting PDF text...";
+
+      const formData = new FormData();
+      formData.append("file", file);
+
+      try {
+        // 1. Upload PDF
+        const upRes = await fetch(`${API_BASE}/upload`, { method: "POST", body: formData });
+        if (!upRes.ok) throw new Error("Upload failed");
+        const upData = await upRes.json();
+        currentFilename = upData.filename;
+
+        statusEl.innerText = "Running PyPDF parsing & keyword screening...";
+
+        // 2. Extract & Screen
+        const extRes = await fetch(`${API_BASE}/extract-text/${currentFilename}`);
+        const extData = await extRes.json();
+
+        // 3. Get Role Recommendations
+        const jobRes = await fetch(`${API_BASE}/recommend-jobs/${currentFilename}`);
+        const jobData = await jobRes.json();
+
+        renderDashboard(extData, jobData.job_recommendations || []);
+      } catch (err) {
+        statusEl.innerText = "Error: " + err.message;
+      }
+    }
+
+    function renderDashboard(data, jobs) {
+      document.getElementById("uploadSection").style.display = "none";
+      document.getElementById("dashboardSection").style.display = "flex";
+      document.getElementById("resetBtn").style.display = "inline-flex";
+
+      // Score
+      document.getElementById("scoreVal").innerText = `${data.score}/100`;
+      const fill = document.getElementById("scoreFill");
+      fill.style.width = `${data.score}%`;
+      fill.style.background = data.score >= 70 ? "var(--green)" : data.score >= 40 ? "var(--yellow)" : "var(--red)";
+
+      // Breakdown
+      const bg = document.getElementById("breakdownGrid");
+      bg.innerHTML = "";
+      Object.entries(data.screening_breakdown || {}).forEach(([cat, val]) => {
+        bg.innerHTML += `
+          <div class="skill-cat">
+            <div class="skill-name">${cat.replace("_", " ")}</div>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <div class="progress-bar" style="flex:1;">
+                <div style="height:100%; width:${val}%; background:var(--accent);"></div>
+              </div>
+              <span style="font-size:0.8rem; font-weight:600;">${val}%</span>
+            </div>
+          </div>
+        `;
+      });
+
+      // Insights
+      document.getElementById("profileSummary").innerText = data.ai_insights?.profile_summary || "";
+      
+      const stEl = document.getElementById("strengthsList");
+      stEl.innerHTML = (data.ai_insights?.strengths || []).map(s => `<li>${s}</li>`).join("");
+
+      const wkEl = document.getElementById("weaknessesList");
+      wkEl.innerHTML = (data.ai_insights?.weaknesses || []).map(w => `<li>${w}</li>`).join("");
+
+      // Download Link
+      document.getElementById("downloadPdfBtn").href = `${API_BASE}/download-analysis/${currentFilename}`;
+
+      // Jobs
+      const jl = document.getElementById("jobsList");
+      jl.innerHTML = jobs.map(j => `
+        <div class="job-card">
+          <div class="job-header">
+            <span>${j.job_title}</span>
+            <span style="color: var(--accent);">${j.match_score}% Match</span>
+          </div>
+          <div style="margin-bottom:0.5rem;">
+            ${(j.matched_skills || []).map(s => `<span class="badge badge-matched">✓ ${s}</span>`).join("")}
+            ${(j.missing_skills || []).map(s => `<span class="badge badge-missing">✗ ${s}</span>`).join("")}
+          </div>
+          <p style="font-size:0.8rem; color:var(--text-muted);">${j.ai_job_insights || ""}</p>
+        </div>
+      `).join("");
+    }
+
+    function resetApp() {
+      document.getElementById("uploadSection").style.display = "block";
+      document.getElementById("dashboardSection").style.display = "none";
+      document.getElementById("resetBtn").style.display = "none";
+      document.getElementById("fileInput").value = "";
+      document.getElementById("uploadStatus").innerText = "";
+    }
+  </script>
+</body>
+</html>
