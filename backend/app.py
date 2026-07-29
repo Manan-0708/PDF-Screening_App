@@ -1,6 +1,7 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
+from starlette.middleware.wsgi import WSGIMiddleware
 from PyPDF2 import PdfReader
 from pydantic import BaseModel
 
@@ -25,12 +26,15 @@ from ai_layer.schemas import ResumeAnalysisInput
 from job_matching.job_data import JOB_LIST
 from job_matching.matcher import match_resume_to_job
 
+# Import Flask application for WSGI mounting
+from flask_app import flask_app
+
 # ------------------------
 # App Setup
 # ------------------------
-app = FastAPI(title="Resume Intelligence API")
+app = FastAPI(title="Resume Intelligence API (FastAPI + Flask)")
 
-# ✅ FIXED CORS (THIS IS THE KEY)
+# ✅ CORS Middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -42,6 +46,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ✅ Mount Flask REST Subsystem cleanly into FastAPI
+app.mount("/flask", WSGIMiddleware(flask_app))
 
 UPLOAD_DIR = "data/uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
@@ -106,8 +113,7 @@ def generate_analysis_pdf(filename: str, analysis: dict) -> str:
 
     draw("")
     draw("Areas to Improve:")
-    for w in analysis["ai_insights"]["weaknesses"]:
-        draw(f"• {w}")
+    draw(f"• {analysis['ai_insights']['weaknesses']}")
 
     draw("")
     draw("Chatbot Feedback:")
@@ -121,8 +127,9 @@ def generate_analysis_pdf(filename: str, analysis: dict) -> str:
 # Models
 # ------------------------
 class ChatRequest(BaseModel):
-    filename: str
     question: str
+    score: int = 0
+    breakdown: dict = {}
 
 
 # ------------------------
@@ -130,11 +137,15 @@ class ChatRequest(BaseModel):
 # ------------------------
 @app.get("/")
 def health_check():
-    return {"status": "API running successfully"}
+    return {
+        "status": "API running successfully",
+        "frameworks": ["FastAPI", "Flask"],
+        "flask_subsystem": "/flask/api/health"
+    }
 
 
 # ------------------------
-# Upload PDF
+# Upload PDF (FastAPI Async Upload)
 # ------------------------
 @app.post("/upload")
 async def upload_pdf(file: UploadFile = File(...)):
@@ -149,7 +160,7 @@ async def upload_pdf(file: UploadFile = File(...)):
 
 
 # ------------------------
-# Extract + Screen + AI Insights
+# PyPDF Text Extraction & Keyword Pipeline
 # ------------------------
 @app.get("/extract-text/{filename}")
 def extract_text(filename: str):
@@ -194,7 +205,7 @@ def extract_text(filename: str):
 
 
 # ------------------------
-# Download Resume Analysis PDF
+# Download Resume Analysis PDF Report
 # ------------------------
 @app.get("/download-analysis/{filename}")
 def download_analysis(filename: str):
@@ -246,7 +257,7 @@ def download_analysis(filename: str):
 
 
 # ------------------------
-# Job Recommendations
+# Role-Based Job Recommendations Endpoint
 # ------------------------
 @app.get("/recommend-jobs/{filename}")
 def recommend_jobs(filename: str):
@@ -292,3 +303,12 @@ def recommend_jobs(filename: str):
     recommendations.sort(key=lambda x: x["match_score"], reverse=True)
 
     return {"filename": filename, "job_recommendations": recommendations}
+
+
+# ------------------------
+# Candidate Q&A Endpoint
+# ------------------------
+@app.post("/ask")
+def chat_ask(req: ChatRequest):
+    answer = answer_question(req.question, req.score, req.breakdown)
+    return {"question": req.question, "answer": answer}

@@ -19,8 +19,9 @@ def generate_response(score: int, breakdown: dict):
                 f"Missing important skills in {category}: {', '.join(data['missing'])}."
             )
             
-        return " ".join(responses)
+    return " ".join(responses)
     
+
 def answer_question(question: str, score: int, breakdown: dict):
     q = question.lower()
 
@@ -35,15 +36,15 @@ def answer_question(question: str, score: int, breakdown: dict):
     if "strength" in q:
         strengths = []
         for category, data in breakdown.items():
-            if data["matched"]:
+            if data.get("matched"):
                 strengths.append(f"{category}: {', '.join(data['matched'])}")
         return "Your strengths are: " + "; ".join(strengths) if strengths else "No strong areas detected."
 
     if "improve" in q or "missing" in q:
         improvements = []
         for category, data in breakdown.items():
-            if data["missing"]:
+            if data.get("missing"):
                 improvements.append(f"{category}: {', '.join(data['missing'])}")
         return "You should work on: " + "; ".join(improvements) if improvements else "No major improvements needed."
 
-    return "You can ask about your score, strengths, or improvements." 
+    return "You can ask about your score, strengths, or improvements."
