@@ -202,9 +202,26 @@
   </footer>
 
   <script>
-    const API_BASE = window.location.origin.includes("3000") || window.location.origin.includes("5500") 
-      ? "http://127.0.0.1:8000" 
-      : window.location.origin;
+    function getApiBase() {
+      const origin = window.location.origin;
+      const hostname = window.location.hostname;
+      const protocol = window.location.protocol;
+
+      if (protocol === "file:" || hostname === "localhost" || hostname === "127.0.0.1") {
+        if (window.location.port === "8000") {
+          return origin;
+        }
+        return "http://127.0.0.1:8000";
+      }
+
+      if (origin.includes("vercel.app")) {
+        return "https://resume-intelligence-backend-4165.onrender.com";
+      }
+
+      return origin;
+    }
+
+    const API_BASE = getApiBase();
 
     let currentFilename = "";
 
@@ -213,6 +230,7 @@
       if (!file) return;
 
       const statusEl = document.getElementById("uploadStatus");
+      statusEl.style.color = "var(--accent)";
       statusEl.innerText = "Uploading & extracting PDF text...";
 
       const formData = new FormData();
@@ -221,23 +239,36 @@
       try {
         // 1. Upload PDF
         const upRes = await fetch(`${API_BASE}/upload`, { method: "POST", body: formData });
-        if (!upRes.ok) throw new Error("Upload failed");
+        if (!upRes.ok) {
+          const errData = await upRes.json().catch(() => ({}));
+          throw new Error(errData.detail || errData.error || `Upload failed (Status ${upRes.status})`);
+        }
         const upData = await upRes.json();
         currentFilename = upData.filename;
 
         statusEl.innerText = "Running PyPDF parsing & keyword screening...";
 
         // 2. Extract & Screen
-        const extRes = await fetch(`${API_BASE}/extract-text/${currentFilename}`);
+        const extRes = await fetch(`${API_BASE}/extract-text/${encodeURIComponent(currentFilename)}`);
+        if (!extRes.ok) {
+          const errData = await extRes.json().catch(() => ({}));
+          throw new Error(errData.detail || errData.error || "Failed to extract text from PDF");
+        }
         const extData = await extRes.json();
 
         // 3. Get Role Recommendations
-        const jobRes = await fetch(`${API_BASE}/recommend-jobs/${currentFilename}`);
+        const jobRes = await fetch(`${API_BASE}/recommend-jobs/${encodeURIComponent(currentFilename)}`);
+        if (!jobRes.ok) {
+          const errData = await jobRes.json().catch(() => ({}));
+          throw new Error(errData.detail || errData.error || "Failed to get job recommendations");
+        }
         const jobData = await jobRes.json();
 
         renderDashboard(extData, jobData.job_recommendations || []);
       } catch (err) {
+        statusEl.style.color = "var(--red)";
         statusEl.innerText = "Error: " + err.message;
+        console.error("Upload error:", err);
       }
     }
 
@@ -279,7 +310,7 @@
       wkEl.innerHTML = (data.ai_insights?.weaknesses || []).map(w => `<li>${w}</li>`).join("");
 
       // Download Link
-      document.getElementById("downloadPdfBtn").href = `${API_BASE}/download-analysis/${currentFilename}`;
+      document.getElementById("downloadPdfBtn").href = `${API_BASE}/download-analysis/${encodeURIComponent(currentFilename)}`;
 
       // Jobs
       const jl = document.getElementById("jobsList");

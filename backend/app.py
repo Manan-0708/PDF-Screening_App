@@ -110,7 +110,12 @@ def generate_analysis_pdf(filename: str, analysis: dict) -> str:
 
     draw("")
     draw("Areas to Improve:")
-    draw(f"• {analysis['ai_insights']['weaknesses']}")
+    weaknesses = analysis["ai_insights"]["weaknesses"]
+    if isinstance(weaknesses, list):
+        for w in weaknesses:
+            draw(f"• {w}")
+    else:
+        draw(f"• {weaknesses}")
 
     draw("")
     draw("Chatbot Feedback:")
@@ -146,8 +151,8 @@ def health_check():
 # ------------------------
 @app.post("/upload")
 async def upload_pdf(file: UploadFile = File(...)):
-    if not file.filename.endswith(".pdf"):
-        raise HTTPException(status_code=400, detail="Only PDF files allowed")
+    if not file.filename or not file.filename.lower().endswith(".pdf"):
+        raise HTTPException(status_code=400, detail="Only PDF files (.pdf) are allowed")
 
     file_path = os.path.join(UPLOAD_DIR, file.filename)
     with open(file_path, "wb") as buffer:
@@ -165,13 +170,15 @@ def extract_text(filename: str):
     if not os.path.exists(file_path):
         raise HTTPException(status_code=404, detail="File not found")
 
-    reader = PdfReader(file_path)
-    extracted_text = ""
-
-    for page in reader.pages:
-        text = page.extract_text()
-        if text:
-            extracted_text += text + "\n"
+    try:
+        reader = PdfReader(file_path)
+        extracted_text = ""
+        for page in reader.pages:
+            text = page.extract_text()
+            if text:
+                extracted_text += text + "\n"
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to read PDF text: {str(e)}")
 
     cleaned_text = clean_text(extracted_text)
     screening_result = screen_resume(cleaned_text, SKILL_CATEGORIES)
@@ -210,13 +217,15 @@ def download_analysis(filename: str):
     if not os.path.exists(file_path):
         raise HTTPException(status_code=404, detail="Resume not found")
 
-    reader = PdfReader(file_path)
-    extracted_text = ""
-
-    for page in reader.pages:
-        text = page.extract_text()
-        if text:
-            extracted_text += text + "\n"
+    try:
+        reader = PdfReader(file_path)
+        extracted_text = ""
+        for page in reader.pages:
+            text = page.extract_text()
+            if text:
+                extracted_text += text + "\n"
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to read PDF text: {str(e)}")
 
     cleaned_text = clean_text(extracted_text)
     screening_result = screen_resume(cleaned_text, SKILL_CATEGORIES)
@@ -262,13 +271,15 @@ def recommend_jobs(filename: str):
     if not os.path.exists(file_path):
         raise HTTPException(status_code=404, detail="File not found")
 
-    reader = PdfReader(file_path)
-    extracted_text = ""
-
-    for page in reader.pages:
-        text = page.extract_text()
-        if text:
-            extracted_text += text + "\n"
+    try:
+        reader = PdfReader(file_path)
+        extracted_text = ""
+        for page in reader.pages:
+            text = page.extract_text()
+            if text:
+                extracted_text += text + "\n"
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to read PDF text: {str(e)}")
 
     cleaned_text = clean_text(extracted_text)
     screening_result = screen_resume(cleaned_text, SKILL_CATEGORIES)
